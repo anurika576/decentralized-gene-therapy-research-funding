@@ -185,7 +185,7 @@
       (trial (unwrap! (map-get? trials trial-id) ERR_TRIAL_NOT_FOUND))
     )
     (asserts! (or (is-eq tx-sender (get sponsor trial))
-                  (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+                  (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (and (>= phase PHASE_I) (<= phase PHASE_IV)) ERR_INVALID_INPUT)
     (asserts! (> target-duration-blocks u0) ERR_INVALID_INPUT)
 
@@ -209,7 +209,7 @@
       (trial (unwrap! (map-get? trials trial-id) ERR_TRIAL_NOT_FOUND))
       (phase-data (unwrap! (map-get? trial-phases {trial-id: trial-id, phase: phase}) ERR_PHASE_NOT_FOUND))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (is-eq phase (get current-phase trial)) ERR_PHASE_OUT_OF_ORDER)
     (asserts! (is-eq (get start-height phase-data) u0) ERR_INVALID_STATUS)
 
@@ -233,7 +233,7 @@
       (trial (unwrap! (map-get? trials trial-id) ERR_TRIAL_NOT_FOUND))
       (phase-data (unwrap! (map-get? trial-phases {trial-id: trial-id, phase: phase}) ERR_PHASE_NOT_FOUND))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (is-eq phase (get current-phase trial)) ERR_PHASE_OUT_OF_ORDER)
     (asserts! (is-eq (get end-height phase-data) u0) ERR_INVALID_STATUS)
 
@@ -260,7 +260,7 @@
 ;; Suspend or resume a trial
 (define-public (set-trial-status (trial-id uint) (status uint))
   (let ((trial (unwrap! (map-get? trials trial-id) ERR_TRIAL_NOT_FOUND)))
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (or (is-eq status STATUS_SUSPENDED)
                   (is-eq status STATUS_ACTIVE)
                   (is-eq status STATUS_TERMINATED)) ERR_INVALID_STATUS)
@@ -283,7 +283,7 @@
       (new-participant-id (+ (var-get participant-counter) u1))
       (p-index (default-to (list) (map-get? trial-participant-index trial-id)))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (is-eq (get status trial) STATUS_ACTIVE) ERR_INVALID_STATUS)
     (asserts! (> age u0) ERR_INVALID_INPUT)
     (asserts! (<= (get enrolled-count trial) (get target-enrollment trial)) ERR_INVALID_INPUT)
@@ -325,7 +325,7 @@
       (participant (unwrap! (map-get? participants {trial-id: trial-id, participant-id: participant-id}) ERR_PARTICIPANT_NOT_FOUND))
       (event-id (+ (var-get adverse-event-counter) u1))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (get is-active participant) ERR_INVALID_STATUS)
 
     (map-set adverse-events event-id
@@ -352,7 +352,7 @@
       (event (unwrap! (map-get? adverse-events event-id) ERR_EVENT_NOT_FOUND))
       (trial (unwrap! (map-get? trials (get trial-id event)) ERR_TRIAL_NOT_FOUND))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized (get trial-id event) tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized (get trial-id event) tx-sender)) ERR_UNAUTHORIZED)
 
     (map-set adverse-events event-id (merge event {resolved: true, resolution-notes: (some notes)}))
     (ok true)
@@ -370,15 +370,16 @@
   (let
     (
       (trial (unwrap! (map-get? trials trial-id) ERR_TRIAL_NOT_FOUND))
-      (sec-list (list))
+      (sec1 (default-to u"" secondary1))
+      (sec2 (default-to u"" secondary2))
     )
-    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-true (is-monitor-authorized trial-id tx-sender))) ERR_UNAUTHORIZED)
+    (asserts! (or (is-eq tx-sender (get sponsor trial)) (is-monitor-authorized trial-id tx-sender)) ERR_UNAUTHORIZED)
     (asserts! (or (is-eq (get status trial) STATUS_COMPLETED) (is-eq (get status trial) STATUS_TERMINATED)) ERR_INVALID_STATUS)
 
     (map-set trial-outcomes trial-id
       {
         primary-outcome: (some primary-outcome),
-        secondary-outcomes: (unwrap! (as-max-len? (append (append sec-list (default-to u"" secondary1)) (default-to u"" secondary2)) u10) sec-list),
+        secondary-outcomes: (list sec1 sec2),
         outcome-height: block-height,
         success-indicator: (some success)
       }
